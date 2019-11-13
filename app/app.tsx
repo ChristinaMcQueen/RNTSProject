@@ -66,6 +66,7 @@ export const App: React.FunctionComponent<{}> = () => {
   if (!rootStore) {
     return null
   }
+  console.log(setRootStore)
 
   // otherwise, we're ready to render the app
   return (

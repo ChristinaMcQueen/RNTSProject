@@ -77,7 +77,7 @@ const FOOTER_CONTENT: ViewStyle = {
 export interface WelcomeScreenProps extends NavigationScreenProps<{}> {}
 
 export const WelcomeScreen: React.FunctionComponent<WelcomeScreenProps> = props => {
-  const nextScreen = React.useMemo(() => () => props.navigation.navigate("demo"), [
+  const nextScreen = React.useMemo(() => () => props.navigation.navigate("component"), [
     props.navigation,
   ])
 
