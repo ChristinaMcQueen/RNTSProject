@@ -2,15 +2,13 @@ import React from 'react'
 import {
   View,
   Text,
+  TouchableOpacity,
+  ViewStyle,
   Animated,
 } from 'react-native'
 import { CheckboxItem, CheckboxItemProps } from './CheckboxItem'
 import styles from './styles'
-
-enum ICON_POSITION {
-  LEFT = 'left',
-  RIGHT = 'right'
-}
+import variables from '../common/styles/variables'
 
 export interface CheckboxItemAllCheckProps extends CheckboxItemProps {
   checkedStatus?: number
@@ -19,85 +17,97 @@ export interface CheckboxItemAllCheckProps extends CheckboxItemProps {
 export class CheckboxItemAllCheck extends CheckboxItem<CheckboxItemAllCheckProps, any> {
   static defaultProps = {
     ...CheckboxItem.defaultProps,
-    label: '全选',
     disabled: false,
-    checkedStatus: 1,
-    iconPosition: ICON_POSITION.LEFT,
-    checkedIcon: null
+    label: '全选',
+    value: '',
   }
 
-  constructor (props) {
-    super(props)
-    this.state = {
+  indeterminateStyle = (disabled?: boolean) => {
+    const { size, color, kind } = this.props
+    const innerSize = (size - 2) / 2
+    const style: ViewStyle = { width: innerSize, height: innerSize, backgroundColor: disabled ? variables.mainGrayLighter : color }
+    kind === 'circle' && (style.borderRadius = innerSize / 2)
+    return style
+  }
+
+  state = {
+    checkedStatus: this.props.checkedStatus,
+    iconMap: {
+      1: { // unchecked
+        disabled: this.props.disabledUncheckedIcon,
+        default: this.props.uncheckedIcon,
+      },
+      2: { // indeterminate
+        disabled: <View style={this.indeterminateStyle(true)} />,
+        default: <View style={this.indeterminateStyle()} />,
+      },
+      3: { // checked
+        disabled: this.props.disabledCheckedIcon,
+        default: this.props.checkedIcon,
+      }
     }
   }
 
-  componentWillReceiveProps (nextProps) {
-    if (nextProps.checkedStatus !== this.props.checkedStatus) {
+  componentDidUpdate(prevProps) {
+    if (prevProps.checkedStatus !== this.props.checkedStatus) {
       this.animated && this.animated.toIn()
+      this.setState({ checkedStatus: this.props.checkedStatus })
     }
   }
 
   handlePress = () => {
-    const { disabled, checkedStatus } = this.props
+    const { disabled, checkedStatus, onChange } = this.props
     if (disabled) {
       return
     }
-    let tmp
-    if (checkedStatus === 1 || checkedStatus === 2) {
-      tmp = 3
-    }
 
-    if (checkedStatus === 3) {
-      tmp = 1
-    }
+    const nextCheckedStatus = ([1, 2].includes(checkedStatus)) ? 3 : 1
     this.animated && this.animated.toIn()
-    this.props.onChange && this.props.onChange(null, tmp, true)
+    onChange && onChange(null, nextCheckedStatus, true)
   }
 
-  renderLabel () {
-    const { label, checkedStatus } = this.props
-
-    return (
-      <Text
-        style={[
-          styles.checkboxLabel,
-          (checkedStatus === 3) ? { color: '#FF5E40', fontWeight: 'bold' } : null
-        ]}>
-        {label}
-      </Text>
-    )
-  }
   renderIcon = () => {
-    const { checkedIcon, checkedStatus, iconPosition, uncheckedIcon } = this.props
-    const styleArray: any[] = []
+    const { disabled } = this.props
+    const { checkedStatus } = this.state
+    
+    const iconView = this.state.iconMap[checkedStatus][disabled ? 'disabled' : 'default']
 
-    if (iconPosition === ICON_POSITION.LEFT) {
-      styleArray.push(styles.iconLeftPosition)
+    const { size, color, kind, style } = this.props
+    const dftStyle: ViewStyle = {
+      width: size,
+      height: size,
+      borderColor: color,
+      backgroundColor: checkedStatus === 3 ? color : "#fff"
     }
+    kind === 'circle' && (dftStyle.borderRadius = size / 2)
+    disabled && Object.assign(dftStyle, styles.disabledCheckboxItem)
 
-    let iconView = null
-    if (checkedStatus === 3) {
-      iconView = checkedIcon
-    } else {
-      // TODO 半选状态
-      // if (checkedStatus === 2) {
-      // }
-      iconView = uncheckedIcon
-    }
-
-    let animatedStyle: any = {}
-    animatedStyle = {
+    const animatedStyle: any = {
       transform: [{ scale: this.animated.getState().scale }],
       opacity: this.animated.getState().opacity
     }
 
     return (
-      <View style={styleArray}>
+      <View style={[styles.checkboxItem, dftStyle, style]}>
         <Animated.View style={animatedStyle}>
-          {iconView}
+          <View>{iconView}</View>
         </Animated.View>
       </View>
+    )
+  }
+  
+  render() {
+    const { label, activeOpacity, containerStyle } = this.props
+    return (
+      <TouchableOpacity
+        onPress={this.handlePress}
+        activeOpacity={activeOpacity}
+      >
+        <View style={[styles.checkboxItemContainer, containerStyle]}>
+          {this.renderIcon()}
+          {typeof label === 'string' ? <Text style={styles.checkboxLabel}>{label}</Text> : label}
+        </View>
+      </TouchableOpacity>
     )
   }
 }

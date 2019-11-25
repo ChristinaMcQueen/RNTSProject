@@ -6,8 +6,9 @@ import {
   PanResponder,
   Platform,
   ViewStyle,
-  Text,
 } from 'react-native';
+
+import variables from '../common/styles/variables'
 
 import styles from './styles';
 
@@ -40,7 +41,7 @@ export interface SwitchProps {
 export default class Switch extends Component<SwitchProps> {
   static defaultProps = {
     disabled: false,
-    color: '#FF5E40',
+    color: variables.mainBrandPrimary,
     size: 'small',
     style: {},
     containerStyle: {},

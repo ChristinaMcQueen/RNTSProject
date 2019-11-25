@@ -47,8 +47,9 @@ export const ComponentScreen: React.FunctionComponent<ComponentScreenProps> = pr
         </View>
         <View style={{ borderBottomWidth: 1, paddingBottom: 10, }}>
           <Text>Checkbox</Text>
-          <Checkbox size={18} color="#FF5E40" value={['test']}>
-            <Checkbox.Item label="ewefr" value="test" />
+          <Checkbox showAllCheck onChange={(value) => console.log(value)}>
+            <Checkbox.Item label="testLabel" disabled/>
+            <Checkbox.Item label="testLabel2"/>
           </Checkbox>
         </View>
       </Screen>

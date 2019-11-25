@@ -6,89 +6,86 @@ import {
   TouchableOpacity,
   ViewStyle,
   Animated,
-  Image,
 } from 'react-native'
 import checkboxItemStyle from './styles'
 import { FadeAnimated } from '../common/animations'
 
-import checkIcon from './check.png';
-
-
 const styles = StyleSheet.create<any>(checkboxItemStyle)
 
 export interface CheckboxItemProps {
-  size?: number   // 尺寸
-  color?: string  // 颜色
-  kind?: 'circle' | 'rounded' // circle-圆形，rounded-圆角方形
-
-  style?: ViewStyle
-  label?: string
-  value?: any | null | undefined
-  disabled?: boolean
+  activeOpacity?: number
   checked?: boolean
-  iconPosition?: 'left' | 'right'
-  onChange?: Function
+  color?: string
   checkedIcon?: ReactElement<any>
+  containerStyle?: ViewStyle | ViewStyle[]
+  disabled?: boolean
+  disabledCheckedIcon?: ReactElement<any>
+  disabledUncheckedIcon?: ReactElement<any>
+  kind?: 'circle' | 'rounded'
+  label?: ReactElement<any>
+  size?: number
+  style?: ViewStyle | ViewStyle[]
   uncheckedIcon?: ReactElement<any>
-  renderItem?: Function,
-  activeOpacity?: number,
+  value: string
+
+  onChange?: Function
+  renderItem?: Function
 }
 
 export class CheckboxItem<T extends CheckboxItemProps, P > extends Component<T, any> {
   static displayName = 'CheckboxItem'
+
   static defaultProps = {
-    size: 18,   // 尺寸
-    color: '#FF5E40',  // 颜色
-    kind: 'rounded', // circle-圆形，rounded-圆角方形
-
-    style: {},
-    label: '选项',
-    value: null,
     disabled: false,
-    checked: false,
-    checkedIcon: null
+    label: '选项',
   }
-  animated: any
 
-  constructor (props) {
-    super(props)
-    this.state = {
-    }
-
-    this.animated = new FadeAnimated({})
+  animated: any = new FadeAnimated({})
+  state: any = {
+    checked: this.props.checked,
   }
 
   componentDidMount () {
     this.animated && this.animated.toIn()
   }
 
-  componentWillReceiveProps (nextProps) {
-    if (nextProps.checked !== this.props.checked) {
+  componentDidUpdate(prevProps) {
+    if (prevProps.checked !== this.props.checked) {
       this.animated && this.animated.toIn()
+      this.setState({ checked: this.props.checked })
     }
   }
 
   handlePress = () => {
-    const { disabled, checked, value, onChange } = this.props
+    const { value, disabled, onChange } = this.props
     if (disabled) {
       return
     }
 
     this.animated && this.animated.toIn()
-    onChange && onChange(value, !checked)
+    const nextState = !this.state.checked
+    this.setState({ checked: nextState }, () => {
+      onChange && onChange(value, nextState)
+    })
   }
 
-  getIconStyle = () => {
-    const { checked, size, color, disabled } = this.props
-    const style = { width: size, height: size, borderColor: color, backgroundColor: checked ? color : "#fff" }
-    Object.assign(style, disabled ? styles.disabledCheckboxItem : {})
-    return style
-  }
-
+  // render checkbox icon
   renderIcon = () => {
-    const { checked, checkedIcon, uncheckedIcon } = this.props
+    const { disabled, checkedIcon, uncheckedIcon, disabledCheckedIcon, disabledUncheckedIcon } = this.props
+    const { checked } = this.state
+    const iconView = disabled
+      ? (checked ? disabledCheckedIcon : disabledUncheckedIcon)
+      : (checked ? checkedIcon : uncheckedIcon)
 
-    const iconView = checked ? checkedIcon : uncheckedIcon
+    const { size, color, kind, style } = this.props
+    const dftStyle: ViewStyle = {
+      width: size,
+      height: size,
+      borderColor: color,
+      backgroundColor: checked ? color : "#fff"
+    }
+    kind === 'circle' && (dftStyle.borderRadius = size / 2)
+    disabled && Object.assign(dftStyle, styles.disabledCheckboxItem)
 
     const animatedStyle: any = {
       transform: [{ scale: this.animated.getState().scale }],
@@ -96,7 +93,7 @@ export class CheckboxItem<T extends CheckboxItemProps, P > extends Component<T, 
     }
 
     return (
-      <View style={[styles.checkboxItem, this.getIconStyle()]}>
+      <View style={[styles.checkboxItem, dftStyle, style]}>
         <Animated.View style={animatedStyle}>
           <View>{iconView}</View>
         </Animated.View>
@@ -104,44 +101,21 @@ export class CheckboxItem<T extends CheckboxItemProps, P > extends Component<T, 
     )
   }
 
-  renderLabel () {
-    const { label, checked } = this.props
-
-    console.log(checked)
-
-    return (
-      <Text
-        style={[
-          styles.checkboxLabel,
-          checked ? { color: '#FF5E40', fontWeight: 'bold' } : null
-        ]}>
-        {label}
-      </Text>
-    )
-  }
-
   render () {
-    const { style, disabled, checked, renderItem, activeOpacity } = this.props
+    const { label, containerStyle, renderItem, activeOpacity } = this.props
+
+    const { checked } = this.state
 
     return (
       <TouchableOpacity
-        style={[
-          {
-            opacity: disabled ? activeOpacity : 1
-          }
-        ]}
         onPress={this.handlePress}
-        activeOpacity={activeOpacity}>
-
+        activeOpacity={activeOpacity}
+      >
         {
           typeof renderItem === 'function' ? renderItem(checked) :
-          <View
-            style={[
-              styles.checkboxItemContainer,
-              style,
-            ]}>
+          <View style={[styles.checkboxItemContainer, containerStyle]}>
             {this.renderIcon()}
-            {this.renderLabel()}
+            {typeof label === 'string' ? <Text style={styles.checkboxLabel}>{label}</Text> : label}
           </View>
         }
       </TouchableOpacity>

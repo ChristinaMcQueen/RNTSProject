@@ -10,6 +10,7 @@ import { RootStore, RootStoreProvider, setupRootStore } from "./models/root-stor
 
 import { contains } from "ramda"
 import { enableScreens } from "react-native-screens"
+import './utils/image.d.ts'
 
 // This puts screens in a native ViewController or Activity. If you want fully native
 // stack navigation, use `createNativeStackNavigator` in place of `createStackNavigator`:
